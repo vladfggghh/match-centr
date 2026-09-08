@@ -46,9 +46,27 @@ if ('serviceWorker' in navigator) {
 components.html(pwa_html, height=0, width=0)
 # ===============================================================================
 
-# НАСТРОЙКА СТРАНИЦЫ (ВАШ КОД)
+# НАСТРОЙКА СТРАНИЦЫ И ИНТЕРФЕЙСА
 st.set_page_config(page_title="Математический Супер-Центр", page_icon="🧮", layout="centered")
 st.title("🧮 МАТЕМАТИЧЕСКИЙ СУПЕР-ЦЕНТР")
+
+# Выбор операции
+operation = st.selectbox(
+    "Выберите математическую операцию:",
+    ["Сложение", "Вычитание", "Умножение", "Деление", "Степень", "Квадратный корень", "Синус", "Косинус"]
+)
+
+# Переменные по умолчанию для функции вычислений
+num1, num2, deg, quad_a, quad_b, quad_c = 0.0, 0.0, 0.0, 1.0, 0.0, 0.0
+
+# Отображаем нужные поля ввода в зависимости от операции
+if operation in ["Сложение", "Вычитание", "Умножение", "Деление", "Степень"]:
+    num1 = st.number_input("Введите первое число:", value=0.0)
+    num2 = st.number_input("Введите второе число:", value=0.0)
+elif operation == "Квадратный корень":
+    num1 = st.number_input("Введите число для извлечения корня:", value=0.0)
+elif operation in ["Синус", "Косинус"]:
+    deg = st.number_input("Введите угол в градусах:", value=0.0)
 
 # --- Логика вычислений ---
 def calculate_math(op, num1, num2, deg, quad_a, quad_b, quad_c):
@@ -63,3 +81,8 @@ def calculate_math(op, num1, num2, deg, quad_a, quad_b, quad_c):
         elif op == "Косинус": return f"Результат: {math.cos(math.radians(deg))}"
     except Exception as e:
         return f"Ошибка: {str(e)}"
+
+# Кнопка для запуска вычислений и вывод результата
+if st.button("Вычислить"):
+    result = calculate_math(operation, num1, num2, deg, quad_a, quad_b, quad_c)
+    st.success(result)
