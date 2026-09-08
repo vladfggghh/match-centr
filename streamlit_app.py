@@ -5,42 +5,55 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 # ==================== БЛОК ДЛЯ ЗАПУСКА КАК ПРИЛОЖЕНИЕ (PWA) ====================
-pwa_html = """
+# Берем вашу загруженную картинку прямо из репозитория
+YOUR_GITHUB_ICON = "https://githubusercontent.com"
+
+pwa_html = f"""
 <script>
-const manifest = {
+const manifest = {{
   "short_name": "MatchCentr",
   "name": "Математический Супер-Центр",
   "icons": [
-    {
-      "src": "https://flaticon.com",
+    {{
+      "src": "{YOUR_GITHUB_ICON}",
       "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }},
+    {{
+      "src": "{YOUR_GITHUB_ICON}",
+      "sizes": "192x192",
       "type": "image/png"
-    }
+    }}
   ],
-  "start_url": "/",
+  "start_url": ".",
   "background_color": "#0e1117",
   "theme_color": "#ff4b4b",
   "display": "standalone",
   "orientation": "portrait"
-};
+}};
 
 const stringManifest = JSON.stringify(manifest);
-const blob = new Blob([stringManifest], {type: 'application/json'});
+const blob = new Blob([stringManifest], {{type: 'application/json'}});
 const manifestURL = URL.createObjectURL(blob);
 const link = document.createElement('link');
 link.rel = 'manifest';
 link.href = manifestURL;
 document.head.appendChild(link);
 
-const swCode = "self.addEventListener('fetch', function(event) {});";
-const swBlob = new Blob([swCode], {type: 'application/javascript'});
+const swCode = `
+  self.addEventListener('install', function(e) {{ self.skipWaiting(); }});
+  self.addEventListener('activate', function(e) {{ e.waitUntil(self.clients.claim()); }});
+  self.addEventListener('fetch', function(e) {{ e.respondWith(fetch(e.request)); }});
+`;
+const swBlob = new Blob([swCode], {{type: 'application/javascript'}});
 const swURL = URL.createObjectURL(swBlob);
 
-if ('serviceWorker' in navigator) {
+if ('serviceWorker' in navigator) {{
   navigator.serviceWorker.register(swURL)
-    .then(() => console.log('PWA готов!'))
+    .then(() => console.log('PWA полностью активирован!'))
     .catch(err => console.log('Ошибка PWA:', err));
-}
+}}
 </script>
 """
 components.html(pwa_html, height=0, width=0)
@@ -93,7 +106,7 @@ with tab1:
                 st.error("Коэффициент 'a' не может быть равен нулю в квадратном уравнении!")
             else:
                 D = b**2 - 4*a*c
-                st.write(f"**Дискриминант ($D$)** = $b^2 - 4ac$ = {b}^2 - 4 \cdot {a} \cdot {c} = **{D}**")
+                st.write(f"**Дискриминант ($D$)** = $b^2 - 4ac$ = {b}^2 - 4 \\cdot {a} \\cdot {c} = **{D}**")
                 
                 if D > 0:
                     x1 = (-b + math.sqrt(D)) / (2 * a)
@@ -138,7 +151,7 @@ with tab2:
 # ==================== ВКЛАДКА 3: 3D РЕЖИМ ====================
 with tab3:
     st.subheader("Визуализация 3D Поверхностей")
-    st.write("Построение трехмерной волны: $z = \\sin(\\sqrt{x^2 + y^2})$")
+    st.write("Построение трехмерной волны: $z = \\sin(\\sqrt{{x^2 + y^2}})$")
     grid_size = st.slider("Разрешение сетки:", 20, 100, 50, key="grid_slider")
     
     if st.button("Сгенерировать 3D График", key="btn_3d_tab"):
@@ -164,7 +177,7 @@ with tab4:
         key="physics_slider"
     )
     
-    mass_weight = {"Земля": 0.5, "Юпитер": 1.2, "Солнце": 3.0, "Нейтронная звезда": 7.0, "Черная дыра": 15.0}
+    mass_weight = {"Земля": 0.5, "Юпитер": 1.2, "Solnce": 3.0, "Нейтронная звезда": 7.0, "Черная дыра": 15.0}
     depth = mass_weight[object_type]
     
     x_space = np.linspace(-4, 4, 60)
