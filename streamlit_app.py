@@ -4,8 +4,7 @@ import math
 import matplotlib.pyplot as plt
 import numpy as np
 
-# ==================== БЛОК ДЛЯ ЗАПУСКА КАК ПРИЛОЖЕНИЕ (PWA) ====================
-# Берем вашу загруженную картинку прямо из репозитория
+# ==================== УЛУЧШЕННЫЙ БЛОК ДЛЯ ЗАПУСКА КАК ПРИЛОЖЕНИЕ (PWA) ====================
 YOUR_GITHUB_ICON = "https://githubusercontent.com"
 
 pwa_html = f"""
@@ -14,17 +13,8 @@ const manifest = {{
   "short_name": "MatchCentr",
   "name": "Математический Супер-Центр",
   "icons": [
-    {{
-      "src": "{YOUR_GITHUB_ICON}",
-      "sizes": "512x512",
-      "type": "image/png",
-      "purpose": "any maskable"
-    }},
-    {{
-      "src": "{YOUR_GITHUB_ICON}",
-      "sizes": "192x192",
-      "type": "image/png"
-    }}
+    {{ "src": "{YOUR_GITHUB_ICON}", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }},
+    {{ "src": "{YOUR_GITHUB_ICON}", "sizes": "192x192", "type": "image/png" }}
   ],
   "start_url": ".",
   "background_color": "#0e1117",
@@ -35,33 +25,54 @@ const manifest = {{
 
 const stringManifest = JSON.stringify(manifest);
 const blob = new Blob([stringManifest], {{type: 'application/json'}});
-const manifestURL = URL.createObjectURL(blob);
-const link = document.createElement('link');
-link.rel = 'manifest';
-link.href = manifestURL;
-document.head.appendChild(link);
+document.head.appendChild(Object.assign(document.createElement('link'), {{rel: 'manifest', href: URL.createObjectURL(blob)}}));
 
 const swCode = `
-  self.addEventListener('install', function(e) {{ self.skipWaiting(); }});
-  self.addEventListener('activate', function(e) {{ e.waitUntil(self.clients.claim()); }});
-  self.addEventListener('fetch', function(e) {{ e.respondWith(fetch(e.request)); }});
+  self.addEventListener('install', e => self.skipWaiting());
+  self.addEventListener('activate', e => e.waitUntil(self.clients.claim()));
+  self.addEventListener('fetch', e => e.respondWith(fetch(e.request)));
 `;
 const swBlob = new Blob([swCode], {{type: 'application/javascript'}});
-const swURL = URL.createObjectURL(swBlob);
+navigator.serviceWorker.register(URL.createObjectURL(swBlob));
 
-if ('serviceWorker' in navigator) {{
-  navigator.serviceWorker.register(swURL)
-    .then(() => console.log('PWA полностью активирован!'))
-    .catch(err => console.log('Ошибка PWA:', err));
-}}
+// Логика кастомной кнопки установки
+let deferredPrompt;
+window.addEventListener('beforeinstallprompt', (e) => {{
+  e.preventDefault();
+  deferredPrompt = e;
+  // Показываем кнопку в Streamlit, посылая сигнал наружу
+  window.parent.postMessage({{type: 'SHOW_INSTALL_BTN'}}, '*');
+}});
+
+window.addEventListener('message', (e) => {{
+  if (e.data.type === 'TRIGGER_INSTALL' && deferredPrompt) {{
+    deferredPrompt.prompt();
+    deferredPrompt.userChoice.then(() => {{ deferredPrompt = null; }});
+  }}
+}});
 </script>
 """
 components.html(pwa_html, height=0, width=0)
-# ===============================================================================
+
+# JS-мост для вызова нативного окна Chrome по кнопке из Streamlit
+def trigger_install_js():
+    components.html("""
+    <script>
+    window.parent.postMessage({type: 'TRIGGER_INSTALL'}, '*');
+    </script>
+    """, height=0, width=0)
+# =========================================================================================
 
 # НАСТРОЙКА СТРАНИЦЫ
 st.set_page_config(page_title="Математический Супер-Центр", page_icon="🧮", layout="centered")
-st.title("🧮 МАТЕМАТИЧЕСКИЙ СУПЕР-ЦЕНТР")
+
+# Кнопка установки приложения прямо в шапке сайта
+col1, col2 = st.columns([2, 1])
+with col1:
+    st.title("🧮 СУПЕР-ЦЕНТР")
+with col2:
+    if st.button("📲 Установить на телефон"):
+        trigger_install_js()
 
 # СОЗДАЕМ ЧЕТЫРЕ ВКЛАДКИ
 tab1, tab2, tab3, tab4 = st.tabs(["🧮 Калькулятор & Квадратные уравнения", "📈 2D Графики", "🧊 3D Режим", "🌌 Физика"])
@@ -177,7 +188,7 @@ with tab4:
         key="physics_slider"
     )
     
-    mass_weight = {"Земля": 0.5, "Юпитер": 1.2, "Solnce": 3.0, "Нейтронная звезда": 7.0, "Черная дыра": 15.0}
+    mass_weight = {"Земля": 0.5, "Юпитер": 1.2, "Солнце": 3.0, "Нейтронная звезда": 7.0, "Черная дыра": 15.0}
     depth = mass_weight[object_type]
     
     x_space = np.linspace(-4, 4, 60)
